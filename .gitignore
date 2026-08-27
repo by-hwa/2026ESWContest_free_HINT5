@@ -1,2 +1,4 @@
 models/
 *.gguf
+coqui_tts/
+melotts/
