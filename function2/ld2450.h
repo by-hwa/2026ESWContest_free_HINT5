@@ -1,30 +1,37 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
 
-struct Target {
+struct RadarTarget {
     bool valid = false;
-    int x = 0;          // mm
-    int y = 0;          // mm
-    int speed = 0;      // cm/s
+    int x = 0;       // [mm]
+    int y = 0;       // [mm]
+    int speed = 0;   // [cm/s]
 };
 
 class LD2450 {
 public:
-    LD2450(const char* port = "/dev/ttyUSB0");
+    explicit LD2450(
+        const std::string& port = "/dev/ttyUSB0",
+        int baud = 256000
+    );
+
     ~LD2450();
 
-    bool isOpen() const { return fd_ >= 0; }
+    LD2450(const LD2450&) = delete;
+    LD2450& operator=(const LD2450&) = delete;
 
-    // Frame 하나를 읽어 targets[3]에 채움
-    // Frame이 아직 완성되지 않았으면 false
-    bool readFrame(Target targets[3]);
+    std::array<RadarTarget, 3> readTargets();
 
 private:
     int fd_ = -1;
-    std::vector<uint8_t> buffer_;
+    std::vector<std::uint8_t> buffer_;
 
-    static int decode(uint8_t low, uint8_t high);
-    static Target parseTarget(const uint8_t* data);
+    void configurePort(int baud);
+
+    static int decode(std::uint8_t low, std::uint8_t high);
+    static RadarTarget parseTarget(const std::uint8_t* data);
 };

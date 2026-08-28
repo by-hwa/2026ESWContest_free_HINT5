@@ -1,38 +1,58 @@
-#include <chrono>
-#include <cstdio>
-#include <thread>
-
+#include "ld2450.h"
 #include "radar_trigger.h"
 #include "spatial_audio.h"
 
+#include <iomanip>
+#include <iostream>
+#include <string>
+
 int main(int argc, char* argv[])
 {
-    const char* port = (argc > 1) ? argv[1] : "/dev/ttyUSB0";
-    const char* sound = (argc > 2) ? argv[2] : "./sounds/warning.wav";
+    const std::string port =
+        (argc > 1) ? argv[1] : "/dev/ttyUSB0";
 
-    RadarTrigger radar(port);
+    const std::string sound =
+        (argc > 2) ? argv[2] : "./sounds/warning.wav";
 
-    if (!radar.isOpen()) {
-        std::fprintf(stderr, "Radar: 포트 열기 실패 (%s)\n", port);
-        return 1;
-    }
+    try {
+        LD2450 sensor(port);
+        RadarTrigger radar;
+        SpatialAudio audio(sound);
 
-    SpatialAudio audio;
+        std::cout << "Rear warning started (Ctrl+C to stop)\n\n";
 
-    if (!audio.init(sound)) {
-        std::fprintf(stderr, "Audio: 초기화 실패 (%s)\n", sound);
-        return 1;
-    }
+        while (true) {
 
-    std::printf("Rear warning started (Ctrl+C to stop)\n");
+            auto targets = sensor.readTargets();
+            auto result = radar.update(targets);
 
-    while (true) {
-        for (const auto& e : radar.poll()) {
-            std::printf(">>> EVENT  X %+.2f m  Y %.2f m\n", e.x, e.y);
-            audio.playRear(e.x, e.y);
+            for (const auto& event : result.events) {
+
+                std::cout
+                    << ">>> EVENT"
+                    << " | X "
+                    << std::fixed
+                    << std::setprecision(2)
+                    << std::showpos
+                    << event.x
+                    << std::noshowpos
+                    << " m"
+                    << " | Y "
+                    << event.y
+                    << " m\n";
+
+                audio.playRear(event.x, event.y);
+            }
         }
+    }
+    catch (const std::exception& e) {
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::cerr
+            << "ERROR: "
+            << e.what()
+            << '\n';
+
+        return 1;
     }
 
     return 0;

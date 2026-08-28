@@ -3,28 +3,27 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
-#include <iostream>
+#include <stdexcept>
 #include <vector>
 
 namespace {
 
 struct WavData {
-    ALenum format;
-    ALsizei sampleRate;
+    ALenum format = 0;
+    ALsizei sampleRate = 0;
     std::vector<char> data;
 };
 
-bool loadWav(const char* filename, WavData& wav)
+WavData loadWav(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::binary);
 
     if (!file) {
-        std::cerr << "Cannot open WAV file\n";
-        return false;
+        throw std::runtime_error("Cannot open WAV file: " + filename);
     }
 
     char riff[4];
-    uint32_t fileSize;
+    std::uint32_t fileSize;
     char wave[4];
 
     file.read(riff, 4);
@@ -33,26 +32,28 @@ bool loadWav(const char* filename, WavData& wav)
 
     if (std::strncmp(riff, "RIFF", 4) != 0 ||
         std::strncmp(wave, "WAVE", 4) != 0) {
-        std::cerr << "Not a WAV file\n";
-        return false;
+        throw std::runtime_error("Not a WAV file: " + filename);
     }
 
-    uint16_t channels = 0;
-    uint32_t sampleRate = 0;
-    uint16_t bitsPerSample = 0;
+    std::uint16_t channels = 0;
+    std::uint32_t sampleRate = 0;
+    std::uint16_t bitsPerSample = 0;
+
+    WavData wav;
 
     while (file) {
         char chunkId[4];
-        uint32_t chunkSize;
+        std::uint32_t chunkSize;
 
         file.read(chunkId, 4);
         file.read(reinterpret_cast<char*>(&chunkSize), 4);
 
-        if (!file)
+        if (!file) {
             break;
+        }
 
         if (std::strncmp(chunkId, "fmt ", 4) == 0) {
-            uint16_t audioFormat;
+            std::uint16_t audioFormat;
 
             file.read(reinterpret_cast<char*>(&audioFormat), 2);
             file.read(reinterpret_cast<char*>(&channels), 2);
@@ -65,8 +66,7 @@ bool loadWav(const char* filename, WavData& wav)
             file.seekg(chunkSize - 16, std::ios::cur);
 
             if (audioFormat != 1) {
-                std::cerr << "Only PCM WAV is supported\n";
-                return false;
+                throw std::runtime_error("Only PCM WAV is supported");
             }
         }
         else if (std::strncmp(chunkId, "data", 4) == 0) {
@@ -86,34 +86,30 @@ bool loadWav(const char* filename, WavData& wav)
         wav.format = AL_FORMAT_STEREO16;
     }
     else {
-        std::cerr << "Only 16-bit mono/stereo WAV is supported\n";
-        return false;
+        throw std::runtime_error("Only 16-bit mono/stereo WAV is supported");
     }
 
-    wav.sampleRate = sampleRate;
+    wav.sampleRate = static_cast<ALsizei>(sampleRate);
 
-    return true;
+    return wav;
 }
 
 }  // namespace
 
 
-bool SpatialAudio::init(const char* soundFile)
+SpatialAudio::SpatialAudio(const std::string& soundFile)
 {
     device_ = alcOpenDevice(nullptr);
 
     if (!device_) {
-        std::cerr << "Failed to open OpenAL device\n";
-        return false;
+        throw std::runtime_error("Failed to open OpenAL device");
     }
 
     context_ = alcCreateContext(device_, nullptr);
 
     if (!context_) {
-        std::cerr << "Failed to create OpenAL context\n";
-        alcCloseDevice(device_);
-        device_ = nullptr;
-        return false;
+        cleanup();
+        throw std::runtime_error("Failed to create OpenAL context");
     }
 
     alcMakeContextCurrent(context_);
@@ -122,45 +118,69 @@ bool SpatialAudio::init(const char* soundFile)
     alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
 
     // OpenAL 기본: 앞 = -Z, 위 = +Y
-    float orientation[] = {
+    const float orientation[] = {
         0.0f, 0.0f, -1.0f,
         0.0f, 1.0f,  0.0f
     };
+
     alListenerfv(AL_ORIENTATION, orientation);
 
-    // WAV
-    WavData wav;
+    try {
+        const WavData wav = loadWav(soundFile);
 
-    if (!loadWav(soundFile, wav)) {
-        alcMakeContextCurrent(nullptr);
-        alcDestroyContext(context_);
-        alcCloseDevice(device_);
-        context_ = nullptr;
-        device_ = nullptr;
-        return false;
+        alGenBuffers(1, &buffer_);
+
+        alBufferData(
+            buffer_,
+            wav.format,
+            wav.data.data(),
+            static_cast<ALsizei>(wav.data.size()),
+            wav.sampleRate
+        );
     }
-
-    alGenBuffers(1, &buffer_);
-    alBufferData(
-        buffer_,
-        wav.format,
-        wav.data.data(),
-        static_cast<ALsizei>(wav.data.size()),
-        wav.sampleRate
-    );
+    catch (...) {
+        cleanup();
+        throw;
+    }
 
     // 동시 재생을 위해 Source 여러 개
-    alGenSources(SOURCE_COUNT, sources_);
+    alGenSources(SOURCE_COUNT, sources_.data());
 
-    for (int i = 0; i < SOURCE_COUNT; ++i) {
-        alSourcei(sources_[i], AL_BUFFER, buffer_);
-        alSourcef(sources_[i], AL_REFERENCE_DISTANCE, 1.0f);
-        alSourcef(sources_[i], AL_MAX_DISTANCE, 30.0f);
-        alSourcef(sources_[i], AL_ROLLOFF_FACTOR, 1.0f);
+    for (ALuint source : sources_) {
+        alSourcei(source, AL_BUFFER, static_cast<ALint>(buffer_));
+        alSourcef(source, AL_REFERENCE_DISTANCE, 1.0f);
+        alSourcef(source, AL_MAX_DISTANCE, 30.0f);
+        alSourcef(source, AL_ROLLOFF_FACTOR, 1.0f);
+    }
+}
+
+
+SpatialAudio::~SpatialAudio()
+{
+    if (sources_[0] != 0) {
+        alDeleteSources(SOURCE_COUNT, sources_.data());
     }
 
-    ready_ = true;
-    return true;
+    if (buffer_ != 0) {
+        alDeleteBuffers(1, &buffer_);
+    }
+
+    cleanup();
+}
+
+
+void SpatialAudio::cleanup()
+{
+    if (context_) {
+        alcMakeContextCurrent(nullptr);
+        alcDestroyContext(context_);
+        context_ = nullptr;
+    }
+
+    if (device_) {
+        alcCloseDevice(device_);
+        device_ = nullptr;
+    }
 }
 
 
@@ -174,39 +194,17 @@ void SpatialAudio::playRear(float x, float y)
 
 void SpatialAudio::play(float x, float y, float z)
 {
-    if (!ready_) {
-        return;
-    }
-
     // 재생 중이 아닌 Source를 찾아 사용
-    for (int i = 0; i < SOURCE_COUNT; ++i) {
-        ALint state;
-        alGetSourcei(sources_[i], AL_SOURCE_STATE, &state);
+    for (ALuint source : sources_) {
+        ALint state = 0;
+        alGetSourcei(source, AL_SOURCE_STATE, &state);
 
         if (state != AL_PLAYING) {
-            alSource3f(sources_[i], AL_POSITION, x, y, z);
-            alSourcePlay(sources_[i]);
+            alSource3f(source, AL_POSITION, x, y, z);
+            alSourcePlay(source);
             return;
         }
     }
 
     // 모든 Source가 재생 중이면 이번 Event는 생략
-}
-
-
-SpatialAudio::~SpatialAudio()
-{
-    if (ready_) {
-        alDeleteSources(SOURCE_COUNT, sources_);
-        alDeleteBuffers(1, &buffer_);
-    }
-
-    if (context_) {
-        alcMakeContextCurrent(nullptr);
-        alcDestroyContext(context_);
-    }
-
-    if (device_) {
-        alcCloseDevice(device_);
-    }
 }
