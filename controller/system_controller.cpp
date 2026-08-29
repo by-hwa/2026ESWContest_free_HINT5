@@ -25,10 +25,15 @@ bool SystemController::initialize()
         return false;
     }
 
-    // TODO:
-    // Function 1 initialization
-    // Function 2 initialization
-    // Audio initialization
+    if (!scene_assistant_.initialize())
+    {
+        std::cerr
+            << "[SystemController] "
+            << "Function 1 initialization failed"
+            << std::endl;
+
+        return false;
+    }
 
     running_ = true;
 
@@ -122,18 +127,7 @@ void SystemController::execute_function1_scene()
               << "Scene Assistant"
               << std::endl;
 
-    // TODO:
-    // Camera capture
-    //      ↓
-    // SmolVLM
-    //      ↓
-    // Text
-    //      ↓
-    // TTS
-
-    std::cout << "[Function1] "
-              << "Capture scene"
-              << std::endl;
+    scene_assistant_.describeScene();
 }
 
 void SystemController::execute_function1_question()
@@ -142,22 +136,7 @@ void SystemController::execute_function1_question()
               << "Question mode"
               << std::endl;
 
-    // TODO:
-    // Recording notification
-    //      ↓
-    // STT
-    //      ↓
-    // Camera image
-    //      ↓
-    // Text + Image
-    //      ↓
-    // SmolVLM
-    //      ↓
-    // TTS
-
-    std::cout << "[Function1] "
-              << "Start recording"
-              << std::endl;
+    scene_assistant_.answerQuestion();
 }
 
 // void SystemController::update_function2()

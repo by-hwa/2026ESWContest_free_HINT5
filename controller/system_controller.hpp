@@ -1,7 +1,7 @@
-#ifndef SYSTEM_CONTROLLER_HPP
-#define SYSTEM_CONTROLLER_HPP
+#pragma once
 
 #include "button.hpp"
+#include "../function1/scene_assistant.hpp"
 
 class SystemController
 {
@@ -19,6 +19,7 @@ private:
     // Button
     // -----------------------------
     Button button_;
+    SceneAssistant scene_assistant_;
 
     // -----------------------------
     // System State
@@ -40,12 +41,10 @@ private:
     // -----------------------------
     // Function 2
     // -----------------------------
-    void update_function2();
+    // void update_function2();
 
     // -----------------------------
     // Utility
     // -----------------------------
     void sleep_ms(int milliseconds);
 };
-
-#endif // SYSTEM_CONTROLLER_HPP

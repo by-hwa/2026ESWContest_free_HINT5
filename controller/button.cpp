@@ -1,12 +1,15 @@
 #include "button.hpp"
 
+#include <gpiod.h>
 #include <iostream>
 
 Button::Button(int gpio_pin, int long_press_ms)
     : gpio_pin_(gpio_pin),
       long_press_ms_(long_press_ms),
       is_pressed_(false),
-      long_press_triggered_(false)
+      long_press_triggered_(false),
+      gpio_chip_(nullptr),
+      gpio_line_(nullptr)
 {
 }
 
@@ -15,8 +18,24 @@ bool Button::initialize()
     std::cout << "[Button] Initialize GPIO: "
               << gpio_pin_ << std::endl;
 
-    // TODO:
-    // Raspberry Pi GPIO 초기화
+    gpio_chip_ = gpiod_chip_open_by_name("gpiochip0");
+    if (gpio_chip_ == nullptr)
+    {
+        std::cerr << "[Button] Failed to open gpiochip0" << std::endl;
+        return false;
+    }
+
+    gpio_line_ = gpiod_chip_get_line(gpio_chip_, gpio_pin_);
+    if (gpio_line_ == nullptr ||
+        gpiod_line_request_input(gpio_line_, "button") < 0)
+    {
+        std::cerr << "[Button] Failed to configure GPIO: "
+                  << gpio_pin_ << std::endl;
+        gpiod_chip_close(gpio_chip_);
+        gpio_chip_ = nullptr;
+        gpio_line_ = nullptr;
+        return false;
+    }
 
     return true;
 }
@@ -87,8 +106,6 @@ ButtonEvent Button::update()
 
 bool Button::read_gpio()
 {
-    // TODO:
-    // Raspberry Pi GPIO 실제 구현
-
-    return false;
+    return gpio_line_ != nullptr &&
+           gpiod_line_get_value(gpio_line_) == 0;
 }

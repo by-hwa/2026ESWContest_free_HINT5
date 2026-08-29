@@ -1,7 +1,9 @@
-#ifndef BUTTON_HPP
-#define BUTTON_HPP
+#pragma once
 
 #include <chrono>
+
+struct gpiod_chip;
+struct gpiod_line;
 
 enum class ButtonEvent
 {
@@ -25,9 +27,10 @@ private:
     bool is_pressed_;
     bool long_press_triggered_;
 
+    gpiod_chip* gpio_chip_;
+    gpiod_line* gpio_line_;
+
     std::chrono::steady_clock::time_point press_start_time_;
 
     bool read_gpio();
 };
-
-#endif // BUTTON_HPP
