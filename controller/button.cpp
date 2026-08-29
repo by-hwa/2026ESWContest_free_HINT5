@@ -9,8 +9,21 @@ Button::Button(int gpio_pin, int long_press_ms)
       is_pressed_(false),
       long_press_triggered_(false),
       gpio_chip_(nullptr),
-      gpio_line_(nullptr)
+      gpio_request_(nullptr)
 {
+}
+
+Button::~Button()
+{
+    if (gpio_request_ != nullptr)
+    {
+        gpiod_line_request_release(gpio_request_);
+    }
+
+    if (gpio_chip_ != nullptr)
+    {
+        gpiod_chip_close(gpio_chip_);
+    }
 }
 
 bool Button::initialize()
@@ -18,22 +31,52 @@ bool Button::initialize()
     std::cout << "[Button] Initialize GPIO: "
               << gpio_pin_ << std::endl;
 
-    gpio_chip_ = gpiod_chip_open_by_name("gpiochip0");
+    gpio_chip_ = gpiod_chip_open("/dev/gpiochip0");
     if (gpio_chip_ == nullptr)
     {
         std::cerr << "[Button] Failed to open gpiochip0" << std::endl;
         return false;
     }
 
-    gpio_line_ = gpiod_chip_get_line(gpio_chip_, gpio_pin_);
-    if (gpio_line_ == nullptr ||
-        gpiod_line_request_input(gpio_line_, "button") < 0)
+    gpiod_line_settings* settings = gpiod_line_settings_new();
+    gpiod_line_config* line_config = gpiod_line_config_new();
+    gpiod_request_config* request_config = gpiod_request_config_new();
+    const unsigned int offset = static_cast<unsigned int>(gpio_pin_);
+
+    if (settings == nullptr || line_config == nullptr ||
+        request_config == nullptr ||
+        gpiod_line_settings_set_direction(
+            settings, GPIOD_LINE_DIRECTION_INPUT) < 0 ||
+        gpiod_line_settings_set_bias(
+            settings, GPIOD_LINE_BIAS_PULL_UP) < 0 ||
+        gpiod_line_config_add_line_settings(
+            line_config, &offset, 1, settings) < 0)
     {
         std::cerr << "[Button] Failed to configure GPIO: "
                   << gpio_pin_ << std::endl;
+
+        gpiod_request_config_free(request_config);
+        gpiod_line_config_free(line_config);
+        gpiod_line_settings_free(settings);
         gpiod_chip_close(gpio_chip_);
         gpio_chip_ = nullptr;
-        gpio_line_ = nullptr;
+        return false;
+    }
+
+    gpiod_request_config_set_consumer(request_config, "button");
+    gpio_request_ = gpiod_chip_request_lines(
+        gpio_chip_, request_config, line_config);
+
+    gpiod_request_config_free(request_config);
+    gpiod_line_config_free(line_config);
+    gpiod_line_settings_free(settings);
+
+    if (gpio_request_ == nullptr)
+    {
+        std::cerr << "[Button] Failed to request GPIO: "
+                  << gpio_pin_ << std::endl;
+        gpiod_chip_close(gpio_chip_);
+        gpio_chip_ = nullptr;
         return false;
     }
 
@@ -106,6 +149,7 @@ ButtonEvent Button::update()
 
 bool Button::read_gpio()
 {
-    return gpio_line_ != nullptr &&
-           gpiod_line_get_value(gpio_line_) == 0;
+    return gpio_request_ != nullptr &&
+           gpiod_line_request_get_value(
+               gpio_request_, gpio_pin_) == GPIOD_LINE_VALUE_INACTIVE;
 }
