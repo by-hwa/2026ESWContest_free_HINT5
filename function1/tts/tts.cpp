@@ -1,7 +1,8 @@
 #include "tts.hpp"
 
+#include "../process_runner.hpp"
+
 #include <iostream>
-#include <cstdlib>
 
 TTS::TTS()
 {
@@ -13,10 +14,12 @@ void TTS::speak(const std::string& text)
     std::cout << "[TTS] "
               << text << '\n';
 
-    std::string command =
-        "espeak-ng -v ko+f2 \"" +
-        text +
-        "\"";
+    const ProcessResult result = runProcess({
+        "espeak-ng", "-v", "ko+f2", text
+    });
 
-    std::system(command.c_str());
+    if (result.exit_code != 0)
+    {
+        std::cerr << "[TTS] eSpeak NG failed\n";
+    }
 }

@@ -3,8 +3,17 @@
 #include <iostream>
 
 SceneAssistant::SceneAssistant()
+    : vlm_model_("", ""),
+      vlm_(vlm_model_)
 {
     std::cout << "[SceneAssistant] Initialized\n";
+}
+
+bool SceneAssistant::initialize()
+{
+    const bool vlm_ready = vlm_model_.initialize();
+    const bool stt_ready = stt_.initialize();
+    return vlm_ready && stt_ready;
 }
 
 void SceneAssistant::describeScene()

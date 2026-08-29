@@ -2,17 +2,19 @@
 
 #include <string>
 
+class VLMModel;
+
 class VLM
 {
 public:
-    VLM();
+    explicit VLM(VLMModel& model);
 
-    // 이미지 → 장면 설명
-    std::string describe(
-        const std::string& image_path);
+    std::string describe(const std::string& image_path);
 
-    // 이미지 + 질문 → 답변
     std::string answer(
         const std::string& image_path,
         const std::string& question);
+
+private:
+    VLMModel& model_;
 };
