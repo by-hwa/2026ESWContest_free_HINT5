@@ -53,6 +53,10 @@ std::string VLMModel::infer(const std::string& image_path, const std::string& pr
             "--image", image_path, "-p", prompt, "-n", "128"
         });
         if (result.exit_code != 0) {
+            if (result.exit_code == 127) {
+                std::cerr << "[VLMModel] Executable not found: "
+                          << executable_ << '\n';
+            }
             std::cerr << "[VLMModel] Inference process failed (exit "
                       << result.exit_code << ")\n";
             return "";

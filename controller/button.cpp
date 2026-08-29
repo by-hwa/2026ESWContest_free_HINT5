@@ -80,6 +80,11 @@ bool Button::initialize()
         return false;
     }
 
+    // 프로그램 시작 시 이미 LOW인 상태를 새 버튼 입력으로 처리하지 않는다.
+    // 버튼을 누른 채 부팅했거나 입력이 안정화되는 동안의 오동작을 막는다.
+    is_pressed_ = read_gpio();
+    long_press_triggered_ = is_pressed_;
+
     return true;
 }
 

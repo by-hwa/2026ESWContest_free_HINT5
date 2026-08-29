@@ -57,7 +57,9 @@ void SceneAssistant::answerQuestion()
 
     if (question.empty())
     {
-        std::cerr << "[Function1] STT failed\n";
+        std::cerr << "[Function1] No question was recognized\n";
+        tts_.speak("질문을 인식하지 못해 주변을 설명해 드리겠습니다.");
+        describeScene();
         return;
     }
 

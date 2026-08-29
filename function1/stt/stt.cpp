@@ -8,7 +8,7 @@
 
 STT::STT()
     : recording_path_("/tmp/ai_assistive_question.wav"),
-      recording_seconds_(5)
+      recording_seconds_(3)
 {
 }
 
@@ -36,7 +36,9 @@ std::string STT::recordAndTranscribe()
             std::cerr << "[STT] Recording failed\n";
             return "";
         }
-        return whisper_.transcribeFile(recording_path_);
+        const std::string transcription = whisper_.transcribeFile(recording_path_);
+        // whisper-cli는 무음일 때 '-'만 출력하는 버전이 있다.
+        return transcription == "-" ? "" : transcription;
     }
     catch (const std::exception& error) {
         std::cerr << "[STT] " << error.what() << '\n';
