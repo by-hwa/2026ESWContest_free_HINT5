@@ -27,6 +27,7 @@ private:
 
     bool is_pressed_;
     bool long_press_triggered_;
+    bool armed_;
 
     gpiod_chip* gpio_chip_;
     gpiod_line_request* gpio_request_;

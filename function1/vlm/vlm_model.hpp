@@ -13,7 +13,7 @@ public:
     VLMModel(
         const std::string& model_path,
         const std::string& mmproj_path,
-        const std::string& executable = "llama-mtmd-cli");
+        const std::string& executable = "");
 
     bool initialize();
 

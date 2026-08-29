@@ -8,6 +8,7 @@ Button::Button(int gpio_pin, int long_press_ms)
       long_press_ms_(long_press_ms),
       is_pressed_(false),
       long_press_triggered_(false),
+      armed_(false),
       gpio_chip_(nullptr),
       gpio_request_(nullptr)
 {
@@ -91,6 +92,18 @@ bool Button::initialize()
 ButtonEvent Button::update()
 {
     const bool pressed = read_gpio();
+
+    // 기동 직후에는 버튼이 한 번 "안 눌림" 상태가 된 것을 확인한 뒤에만
+    // 입력을 받는다. 배선/풀업 안정화 과정의 LOW를 버튼 입력으로 막는다.
+    if (!armed_)
+    {
+        if (!pressed)
+        {
+            armed_ = true;
+        }
+
+        return ButtonEvent::NONE;
+    }
 
     // --------------------------------
     // 버튼을 새롭게 누름
