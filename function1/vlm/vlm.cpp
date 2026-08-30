@@ -16,9 +16,7 @@ std::string VLM::describe(
               << image_path << '\n';
 
     const std::string prompt =
-        "Describe the image for a blind user in one short English sentence. "
-        "Use no more than 12 words. Mention only the most important person, "
-        "obstacle, or hazard.";
+        "Describe shortly and brefly";
 
     std::cout << "[VLM] Prompt: "
               << prompt << '\n'; 
@@ -34,9 +32,7 @@ std::string VLM::answer(
               << question << '\n';
 
     const std::string prompt =
-        "Answer this question about the image in one short English sentence. "
-        "Use no more than 12 words. Do not add details or guess. "
-        "Question: " + question;
+        "Answer directly and briefly: " + question;
 
     std::cout << "[VLM] Prompt: "
               << prompt << '\n';
