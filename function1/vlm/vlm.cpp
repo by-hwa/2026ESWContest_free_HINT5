@@ -20,6 +20,9 @@ std::string VLM::describe(
         "Use no more than 12 words. Mention only the most important person, "
         "obstacle, or hazard.";
 
+    std::cout << "[VLM] Prompt: "
+              << prompt << '\n'; 
+
     return model_.infer(image_path, prompt);
 }
 
@@ -34,6 +37,9 @@ std::string VLM::answer(
         "Answer this question about the image in one short English sentence. "
         "Use no more than 12 words. Do not add details or guess. "
         "Question: " + question;
+
+    std::cout << "[VLM] Prompt: "
+              << prompt << '\n';
 
     return model_.infer(image_path, prompt);
 }
