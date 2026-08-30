@@ -50,7 +50,7 @@ std::string VLMModel::infer(const std::string& image_path, const std::string& pr
     try {
         const ProcessResult result = runProcess({
             executable_, "-m", model_path_, "--mmproj", mmproj_path_,
-            "--image", image_path, "-p", prompt, "-n", "128"
+            "--image", image_path, "-p", prompt, "-n", "40"
         });
         if (result.exit_code != 0) {
             if (result.exit_code == 127) {

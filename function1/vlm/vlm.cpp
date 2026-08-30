@@ -16,8 +16,9 @@ std::string VLM::describe(
               << image_path << '\n';
 
     const std::string prompt =
-        "Describe the image briefly and clearly in English for a blind user. "
-        "Prioritize people, obstacles, hazards, and a safe direction of travel.";
+        "Describe the image for a blind user in one short English sentence. "
+        "Use no more than 12 words. Mention only the most important person, "
+        "obstacle, or hazard.";
 
     return model_.infer(image_path, prompt);
 }
@@ -30,8 +31,8 @@ std::string VLM::answer(
               << question << '\n';
 
     const std::string prompt =
-        "Answer this question about the image briefly and accurately in English. "
-        "Do not guess when the image does not provide enough information. "
+        "Answer this question about the image in one short English sentence. "
+        "Use no more than 12 words. Do not add details or guess. "
         "Question: " + question;
 
     return model_.infer(image_path, prompt);
