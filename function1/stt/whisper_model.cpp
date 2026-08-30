@@ -17,7 +17,7 @@ std::string envOrDefault(const char* name, const char* fallback)
 }  // namespace
 
 WhisperModel::WhisperModel(const std::string& model_path, const std::string& executable)
-    : model_path_(model_path.empty() ? envOrDefault("WHISPER_MODEL_PATH", "models/ggml-small.bin") : model_path),
+    : model_path_(model_path.empty() ? envOrDefault("WHISPER_MODEL_PATH", "models/ggml-base.bin") : model_path),
       executable_(executable.empty() ? envOrDefault("WHISPER_CLI", "whisper-cli") : executable)
 {
 }

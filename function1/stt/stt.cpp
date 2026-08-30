@@ -6,6 +6,29 @@
 #include <filesystem>
 #include <iostream>
 
+namespace {
+
+void playRecordingCompleteTone()
+{
+    const char* configured_path = std::getenv("NOTIFICATION_SOUND_PATH");
+    const std::string sound_path =
+        (configured_path != nullptr && *configured_path != '\0')
+            ? configured_path
+            : "spatial_audio.cpp/sounds/message_sound.wav";
+
+    const ProcessResult result = runProcess({
+        "aplay", "-q", sound_path
+    });
+
+    if (result.exit_code != 0)
+    {
+        std::cerr << "[STT] Recording-complete tone failed: "
+                  << sound_path << '\n';
+    }
+}
+
+}  // namespace
+
 STT::STT()
     : recording_path_("/tmp/ai_assistive_question.wav"),
       recording_seconds_(3)
@@ -25,6 +48,8 @@ std::string STT::recordAndTranscribe()
     const std::string input_device =
         (device != nullptr && *device != '\0') ? device : "default";
 
+    std::cout << "[STT] Input device: " << input_device << '\n';
+
     try {
         const ProcessResult recording = runProcess({
             "arecord", "-D", input_device, "-f", "S16_LE", "-r", "16000",
@@ -36,9 +61,18 @@ std::string STT::recordAndTranscribe()
             std::cerr << "[STT] Recording failed\n";
             return "";
         }
+
+        playRecordingCompleteTone();
+
         const std::string transcription = whisper_.transcribeFile(recording_path_);
-        // whisper-cli는 무음일 때 '-'만 출력하는 버전이 있다.
-        return transcription == "-" ? "" : transcription;
+        // whisper-cli 버전에 따라 무음은 '-', '[BLANK_AUDIO]' 등으로 출력된다.
+        if (transcription == "-" ||
+            transcription == "[BLANK_AUDIO]" ||
+            transcription == "[BLANK]") {
+            return "";
+        }
+
+        return transcription;
     }
     catch (const std::exception& error) {
         std::cerr << "[STT] " << error.what() << '\n';
