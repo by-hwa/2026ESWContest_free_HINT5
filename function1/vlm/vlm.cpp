@@ -16,7 +16,8 @@ std::string VLM::describe(
               << image_path << '\n';
 
     const std::string prompt =
-        "이미지를 보고 시각장애인에게 안내하듯 한국어로 짧고 명확하게 설명하세요. ";
+        "Describe the image briefly and clearly in English for a blind user. "
+        "Prioritize people, obstacles, hazards, and a safe direction of travel.";
 
     return model_.infer(image_path, prompt);
 }
@@ -29,8 +30,9 @@ std::string VLM::answer(
               << question << '\n';
 
     const std::string prompt =
-        "이미지를 바탕으로 다음 질문에 한국어로 짧고 정확하게 답하세요. "
-        "질문: " + question;
+        "Answer this question about the image briefly and accurately in English. "
+        "Do not guess when the image does not provide enough information. "
+        "Question: " + question;
 
     return model_.infer(image_path, prompt);
 }

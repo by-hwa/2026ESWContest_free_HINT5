@@ -43,7 +43,7 @@ std::string WhisperModel::transcribeFile(const std::string& wav_path) const
 
     try {
         const ProcessResult result = runProcess({
-            executable_, "-m", model_path_, "-f", wav_path, "-l", "ko", "-nt"
+            executable_, "-m", model_path_, "-f", wav_path, "-l", "en", "-nt"
         });
         if (result.exit_code != 0) {
             std::cerr << "[WhisperModel] Transcription process failed (exit "

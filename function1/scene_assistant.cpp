@@ -38,6 +38,9 @@ void SceneAssistant::describeScene()
         return;
     }
 
+    std::cout << "[Function1] VLM result: "
+              << description << '\n';
+
     // 3. 음성 출력
     tts_.speak(description);
 
@@ -48,9 +51,8 @@ void SceneAssistant::answerQuestion()
 {
     std::cout << "[Function1] Question answering started\n";
 
-    // TODO: 시작 알림음으로 대체
-    // 1. 녹음 시작 안내
-    tts_.speak("질문을 말씀해주세요.");
+    // 1. 1초 롱프레스가 감지되는 즉시 알림음을 재생하고 녹음을 시작한다.
+    tts_.playListeningTone();
 
     // 2. 음성 → 텍스트
     std::string question = stt_.recordAndTranscribe();
@@ -58,7 +60,7 @@ void SceneAssistant::answerQuestion()
     if (question.empty())
     {
         std::cerr << "[Function1] No question was recognized\n";
-        tts_.speak("질문을 인식하지 못해 주변을 설명해 드리겠습니다.");
+        tts_.speak("I could not understand the question. I will describe the scene.");
         describeScene();
         return;
     }
@@ -84,6 +86,9 @@ void SceneAssistant::answerQuestion()
         std::cerr << "[Function1] VLM failed\n";
         return;
     }
+
+    std::cout << "[Function1] VLM result: "
+              << answer << '\n';
 
     // 5. 답변 음성 출력
     tts_.speak(answer);
