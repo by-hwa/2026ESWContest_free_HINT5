@@ -52,8 +52,8 @@ std::string STT::recordAndTranscribe()
 
     try {
         const ProcessResult recording = runProcess({
-            "arecord", "-D", input_device, "-f", "S16_LE", "-r", "16000",
-            "-c", "1", "-d", std::to_string(recording_seconds_), recording_path_
+            "arecord", "-D", input_device, "-f", "cd", "-d",
+            std::to_string(recording_seconds_), "-t", "wav", recording_path_
         });
         if (recording.exit_code != 0 ||
             !std::filesystem::is_regular_file(recording_path_) ||
