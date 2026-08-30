@@ -15,7 +15,7 @@ void TTS::speak(const std::string& text)
               << text << '\n';
 
     const ProcessResult result = runProcess({
-        "espeak-ng", "-v", "ko+f2", text
+        "espeak-ng", "-v", "ko", text
     });
 
     if (result.exit_code != 0)
