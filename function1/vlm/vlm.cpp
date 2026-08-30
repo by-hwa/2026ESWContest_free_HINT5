@@ -16,7 +16,7 @@ std::string VLM::describe(
               << image_path << '\n';
 
     const std::string prompt =
-        "Describe shortly and brefly";
+        "Give one short description sentence.";
 
     std::cout << "[VLM] Prompt: "
               << prompt << '\n'; 
@@ -32,7 +32,7 @@ std::string VLM::answer(
               << question << '\n';
 
     const std::string prompt =
-        "Answer directly and briefly: " + question;
+        "Answer in one short sentence: " + question;
 
     std::cout << "[VLM] Prompt: "
               << prompt << '\n';
