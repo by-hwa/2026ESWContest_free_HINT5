@@ -49,7 +49,7 @@ bool Button::initialize()
         gpiod_line_settings_set_direction(
             settings, GPIOD_LINE_DIRECTION_INPUT) < 0 ||
         gpiod_line_settings_set_bias(
-            settings, GPIOD_LINE_BIAS_PULL_UP) < 0 ||
+            settings, GPIOD_LINE_BIAS_PULL_DOWN) < 0 ||
         gpiod_line_config_add_line_settings(
             line_config, &offset, 1, settings) < 0)
     {
@@ -81,7 +81,7 @@ bool Button::initialize()
         return false;
     }
 
-    // 프로그램 시작 시 이미 LOW인 상태를 새 버튼 입력으로 처리하지 않는다.
+    // 프로그램 시작 시 이미 HIGH인 상태를 새 버튼 입력으로 처리하지 않는다.
     // 버튼을 누른 채 부팅했거나 입력이 안정화되는 동안의 오동작을 막는다.
     is_pressed_ = read_gpio();
     long_press_triggered_ = is_pressed_;
@@ -94,7 +94,7 @@ ButtonEvent Button::update()
     const bool pressed = read_gpio();
 
     // 기동 직후에는 버튼이 한 번 "안 눌림" 상태가 된 것을 확인한 뒤에만
-    // 입력을 받는다. 배선/풀업 안정화 과정의 LOW를 버튼 입력으로 막는다.
+    // 입력을 받는다. 배선/풀다운 안정화 과정의 HIGH를 버튼 입력으로 막는다.
     if (!armed_)
     {
         if (!pressed)
@@ -169,5 +169,5 @@ bool Button::read_gpio()
 {
     return gpio_request_ != nullptr &&
            gpiod_line_request_get_value(
-               gpio_request_, gpio_pin_) == GPIOD_LINE_VALUE_INACTIVE;
+               gpio_request_, gpio_pin_) == GPIOD_LINE_VALUE_ACTIVE;
 }
