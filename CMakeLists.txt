@@ -8,7 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GPIOD REQUIRED IMPORTED_TARGET libgpiod)
+pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
 
+# function 1
 add_executable(ai_assistive
     controller/main.cpp
     controller/button.cpp
@@ -28,3 +30,13 @@ target_include_directories(ai_assistive PRIVATE
 )
 
 target_link_libraries(ai_assistive PRIVATE PkgConfig::GPIOD)
+
+# function 2
+add_executable(rear_warning
+    function2/main.cpp
+    function2/ld2450.cpp
+    function2/radar_trigger.cpp
+    function2/spatial_audio.cpp
+)
+
+target_link_libraries(rear_warning PRIVATE PkgConfig::OPENAL)
