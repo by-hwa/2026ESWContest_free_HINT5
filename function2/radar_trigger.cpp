@@ -19,14 +19,14 @@ constexpr Zone ZONES[] = {
     {6000, 2.5},    // 3.0 ~ 6.0 m
 };
 
-constexpr int MIN_RANGE = 1000;         // 이보다 가까우면 알림 없음 [mm]
-constexpr int MAX_RANGE = 6000;         // 이보다 멀면 알림 없음 [mm]
+constexpr int MIN_RANGE = 1000;     // 이보다 가까우면 알림 없음 [mm]
+constexpr int MAX_RANGE = 6000;     // 이보다 멀면 알림 없음 [mm]
 
-// 정지 판정 : MOVE_THRESHOLD 이내 변화가 STATIONARY_SEC 이상 지속
-constexpr double MOVE_THRESHOLD = 300.0;    // [mm]
+// 정지 판정 : MOVE_THRESHOLD 이내 이동이 STATIONARY_SEC 이상 지속
+constexpr double MOVE_THRESHOLD = 200.0;    // [mm]
 constexpr double STATIONARY_SEC = 3.0;      // [s]
 
-constexpr double CLEAR_SEC = 1.5;       // 미검출 지속 시 상태 초기화 [s]
+constexpr double CLEAR_SEC = 1.5;   // 미검출 지속 시 상태 초기화 [s]
 
 
 // 거리에 해당하는 알림 주기 반환. 범위 밖이면 0
@@ -50,7 +50,8 @@ double intervalFor(double distance)
 
 void RadarTrigger::SlotState::clear()
 {
-    anchorDistance.reset();
+    anchorX.reset();
+    anchorY.reset();
     active = false;
 }
 
@@ -71,8 +72,9 @@ RadarUpdateResult RadarTrigger::update(
         // Target 미검출
         if (!target.valid) {
 
-            if (state.active) {
-                double elapsed = std::chrono::duration<double>(
+            if (state.anchorX.has_value()) {
+
+                const double elapsed = std::chrono::duration<double>(
                     now - state.lastSeen
                 ).count();
 
@@ -95,32 +97,69 @@ RadarUpdateResult RadarTrigger::update(
 
         state.lastSeen = now;
 
-        // 정지 판정
-        // 기준 거리에서 MOVE_THRESHOLD 이상 벗어나면 기준을 갱신
-        if (!state.anchorDistance.has_value()
-            || std::abs(distance - *state.anchorDistance) > MOVE_THRESHOLD) {
+        const double interval = intervalFor(distance);
 
-            state.anchorDistance = distance;
-            state.anchorTime = now;
+        RadarDebug debug;
+
+        debug.slot = static_cast<int>(i + 1);
+        debug.x = x;
+        debug.y = y;
+        debug.speed = target.speed;
+        debug.distance = distance;
+        debug.interval = interval;
+
+        // 알림 범위 밖이면 상태 초기화
+        // 다시 범위 안으로 들어올 때 첫 알림이 정지 판정으로 막히지 않도록
+        if (interval == 0.0) {
+
+            state.clear();
+
+            debug.stationary = false;
+            debug.triggered = false;
+
+            result.debug[i] = debug;
+            continue;
         }
 
-        double heldFor = std::chrono::duration<double>(
+        // 정지 판정 : 기준 위치에서 얼마나 이동했는지
+        if (!state.anchorX.has_value()) {
+
+            state.anchorX = x;
+            state.anchorY = y;
+            state.anchorTime = now;
+        }
+        else {
+
+            const double moved = std::hypot(
+                static_cast<double>(x - *state.anchorX),
+                static_cast<double>(y - *state.anchorY)
+            );
+
+            // 충분히 움직였으면 기준 위치 갱신
+            if (moved > MOVE_THRESHOLD) {
+                state.anchorX = x;
+                state.anchorY = y;
+                state.anchorTime = now;
+            }
+        }
+
+        const double heldFor = std::chrono::duration<double>(
             now - state.anchorTime
         ).count();
 
         const bool stationary = heldFor >= STATIONARY_SEC;
 
-        const double interval = intervalFor(distance);
         bool triggered = false;
 
-        if (interval > 0.0 && !stationary) {
+        if (!stationary) {
 
             // 새로 감지된 Target은 즉시 알림
             if (!state.active) {
                 triggered = true;
             }
             else {
-                double elapsed = std::chrono::duration<double>(
+
+                const double elapsed = std::chrono::duration<double>(
                     now - state.lastPlayed
                 ).count();
 
@@ -141,14 +180,6 @@ RadarUpdateResult RadarTrigger::update(
             state.active = true;
         }
 
-        RadarDebug debug;
-
-        debug.slot = static_cast<int>(i + 1);
-        debug.x = x;
-        debug.y = y;
-        debug.speed = target.speed;
-        debug.distance = distance;
-        debug.interval = interval;
         debug.stationary = stationary;
         debug.triggered = triggered;
 

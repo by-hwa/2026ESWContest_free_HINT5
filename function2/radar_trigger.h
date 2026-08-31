@@ -37,10 +37,13 @@ public:
 
 private:
     struct SlotState {
-        std::optional<double> anchorDistance;   // 정지 판정 기준 거리
+        std::optional<int> anchorX;     // 정지 판정 기준 위치
+        std::optional<int> anchorY;
+
         std::chrono::steady_clock::time_point anchorTime {};
         std::chrono::steady_clock::time_point lastPlayed {};
         std::chrono::steady_clock::time_point lastSeen {};
+
         bool active = false;
 
         void clear();

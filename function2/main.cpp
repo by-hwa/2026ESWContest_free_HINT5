@@ -14,7 +14,7 @@ namespace {
 std::string positionBar(int radarX)
 {
     // 후방 배치이므로 반전
-    float userX = -radarX / 1000.0f;
+    const float userX = -radarX / 1000.0f;
 
     int pos = static_cast<int>((userX + 3.0f) / 6.0f * 40.0f);
     pos = std::max(0, std::min(40, pos));
@@ -34,12 +34,12 @@ int main(int argc, char* argv[])
     bool verbose = false;
 
     std::string port = "/dev/ttyUSB0";
-    std::string sound = "./sounds/warning.wav";
+    std::string sound = "./function2/sounds/warning.wav";
 
     std::vector<std::string> args;
 
     for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
+        const std::string arg = argv[i];
 
         if (arg == "-v" || arg == "--verbose") {
             verbose = true;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
                     << (d.distance / 1000.0) << " m"
                     << "  int " << d.interval << " s"
                     << (d.stationary ? "  [정지]" : "")
-                    << '\n';
+                    << std::endl;
 
                 break;      // 첫 Target만
             }
