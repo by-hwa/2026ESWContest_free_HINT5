@@ -186,9 +186,10 @@ void SpatialAudio::cleanup()
 
 void SpatialAudio::playRear(float x, float y)
 {
-    // 레이더는 후방을 향하므로
+    // 레이더가 후방을 향하므로 좌우 반전
+    //   센서 기준 오른쪽 = 사용자 기준 왼쪽
     // 레이더 전방 거리(y) → OpenAL 후방(+Z)
-    play(x, 0.0f, y);
+    play(-x, 0.0f, y);
 }
 
 

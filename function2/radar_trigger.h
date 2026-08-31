@@ -5,7 +5,6 @@
 #include <array>
 #include <chrono>
 #include <optional>
-#include <set>
 #include <vector>
 
 struct RadarEvent {
@@ -20,10 +19,9 @@ struct RadarDebug {
     int speed = 0;
     double distance = 0.0;
 
-    std::optional<int> lastBoundary;
-    std::optional<int> triggered;
-
-    std::vector<int> locked;
+    double interval = 0.0;      // 현재 구간의 알림 주기 [s]
+    bool stationary = false;    // 정지 판정
+    bool triggered = false;
 };
 
 struct RadarUpdateResult {
@@ -39,11 +37,11 @@ public:
 
 private:
     struct SlotState {
-        std::optional<double> previousDistance;
-        std::optional<int> lastBoundary;
-
+        std::optional<double> anchorDistance;   // 정지 판정 기준 거리
+        std::chrono::steady_clock::time_point anchorTime {};
+        std::chrono::steady_clock::time_point lastPlayed {};
         std::chrono::steady_clock::time_point lastSeen {};
-        std::set<int> lockedBoundaries;
+        bool active = false;
 
         void clear();
     };
