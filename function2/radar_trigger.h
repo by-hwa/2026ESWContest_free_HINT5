@@ -8,8 +8,8 @@
 #include <vector>
 
 struct RadarEvent {
-    float x = 0.0f;   // 좌우 [m]
-    float y = 0.0f;   // 전방 거리 [m]
+    float x = 0.0f;
+    float y = 0.0f;
 };
 
 struct RadarDebug {
@@ -17,10 +17,12 @@ struct RadarDebug {
     int x = 0;
     int y = 0;
     int speed = 0;
-    double distance = 0.0;
 
-    double interval = 0.0;      // 현재 구간의 알림 주기 [s]
-    bool stationary = false;    // 정지 판정
+    double distance = 0.0;
+    double interval = 0.0;
+
+    bool approaching = false;
+    bool stationary = false;
     bool triggered = false;
 };
 
@@ -37,13 +39,15 @@ public:
 
 private:
     struct SlotState {
-        std::optional<int> anchorX;     // 정지 판정 기준 위치
+        std::optional<int> anchorX;
         std::optional<int> anchorY;
+        std::optional<double> anchorDistance;
 
         std::chrono::steady_clock::time_point anchorTime {};
         std::chrono::steady_clock::time_point lastPlayed {};
         std::chrono::steady_clock::time_point lastSeen {};
 
+        bool approaching = false;
         bool active = false;
 
         void clear();
