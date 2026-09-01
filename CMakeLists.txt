@@ -40,3 +40,4 @@ add_executable(rear_warning
 )
 
 target_link_libraries(rear_warning PRIVATE PkgConfig::OPENAL)
+
