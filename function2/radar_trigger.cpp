@@ -26,7 +26,7 @@ constexpr int MAX_RANGE = 6000;
 constexpr double MOVE_THRESHOLD = 200.0;
 
 // 접근 / 비접근 상태를 변경하기 위한 거리 변화 [mm]
-constexpr double DIRECTION_THRESHOLD = 100.0;
+constexpr double DIRECTION_THRESHOLD = 200.0;
 
 // 이보다 큰 순간 위치 변화는
 // 동일 Target의 연속 움직임으로 판단하지 않음 [mm]

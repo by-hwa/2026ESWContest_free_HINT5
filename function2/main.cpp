@@ -3,12 +3,44 @@
 #include "spatial_audio.h"
 
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
 namespace {
+
+// 현재 시간 HH:MM:SS.mmm 형식으로 반환
+std::string timestamp()
+{
+    const auto now = std::chrono::system_clock::now();
+
+    const auto timeT =
+        std::chrono::system_clock::to_time_t(now);
+
+    std::tm localTime{};
+    localtime_r(&timeT, &localTime);
+
+    const auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch()
+        ) % 1000;
+
+    std::ostringstream oss;
+
+    oss
+        << std::put_time(&localTime, "%H:%M:%S")
+        << "."
+        << std::setfill('0')
+        << std::setw(3)
+        << milliseconds.count();
+
+    return oss.str();
+}
+
 
 // 사용자 기준 좌우 위치를 막대로 표시
 std::string positionBar(int radarX)
@@ -125,6 +157,8 @@ int main(int argc, char* argv[])
 
 
                 std::cout
+                    << timestamp()
+                    << " "
                     << (d.triggered ? ">>> " : "    ")
                     << "T" << d.slot
                     << " [" << positionBar(d.x) << "]"
