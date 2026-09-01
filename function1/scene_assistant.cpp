@@ -51,10 +51,7 @@ void SceneAssistant::answerQuestion()
 {
     std::cout << "[Function1] Question answering started\n";
 
-    // 1. 1초 롱프레스가 감지되는 즉시 알림음을 재생하고 녹음을 시작한다.
-    tts_.playListeningTone();
-
-    // 2. 음성 → 텍스트
+    // 1. 음성 → 텍스트
     std::string question = stt_.recordAndTranscribe();
 
     if (question.empty())

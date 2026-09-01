@@ -8,7 +8,7 @@
 
 namespace {
 
-void playRecordingCompleteTone()
+void playRecordingTone(const char* phase)
 {
     const char* configured_path = std::getenv("NOTIFICATION_SOUND_PATH");
     const std::string sound_path =
@@ -22,7 +22,7 @@ void playRecordingCompleteTone()
 
     if (result.exit_code != 0)
     {
-        std::cerr << "[STT] Recording-complete tone failed: "
+        std::cerr << "[STT] " << phase << " tone failed: "
                   << sound_path << '\n';
     }
 }
@@ -42,6 +42,8 @@ bool STT::initialize()
 
 std::string STT::recordAndTranscribe()
 {
+    playRecordingTone("Recording-start");
+
     std::cout << "[STT] Recording...\n";
 
     const char* device = std::getenv("AUDIO_DEVICE");
@@ -66,7 +68,7 @@ std::string STT::recordAndTranscribe()
             return "";
         }
 
-        playRecordingCompleteTone();
+        playRecordingTone("Recording-complete");
 
         const std::string transcription = whisper_.transcribeFile(recording_path_);
         // whisper-cli 버전에 따라 무음은 '-', '[BLANK_AUDIO]' 등으로 출력된다.

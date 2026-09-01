@@ -8,5 +8,4 @@ public:
     TTS();
 
     void speak(const std::string& text);
-    void playListeningTone();
 };
