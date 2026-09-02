@@ -1,4 +1,4 @@
-# 2026ESWContest_free_hint5
+# 2026ESWContest_free_HINT5
 
 # Echo Sense
 
